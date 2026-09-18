@@ -1,0 +1,43 @@
+name: OCI ARM Hunter
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  hunt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Install dependencies
+        run: composer install --no-dev --no-interaction
+
+      - name: Write OCI private key
+        run: |
+          echo "${{ secrets.OCI_PRIVATE_KEY_CONTENT }}" > /tmp/oci_api_key.pem
+          chmod 600 /tmp/oci_api_key.pem
+
+      - name: Create .env
+        run: |
+          printf 'OCI_REGION=%s\n' "${{ secrets.OCI_REGION }}" >> .env
+          printf 'OCI_USER_ID=%s\n' "${{ secrets.OCI_USER_ID }}" >> .env
+          printf 'OCI_TENANCY_ID=%s\n' "${{ secrets.OCI_TENANCY_ID }}" >> .env
+          printf 'OCI_KEY_FINGERPRINT=%s\n' "${{ secrets.OCI_KEY_FINGERPRINT }}" >> .env
+          printf 'OCI_PRIVATE_KEY_FILENAME=/tmp/oci_api_key.pem\n' >> .env
+          printf 'OCI_SUBNET_ID=%s\n' "${{ secrets.OCI_SUBNET_ID }}" >> .env
+          printf 'OCI_IMAGE_ID=%s\n' "${{ secrets.OCI_IMAGE_ID }}" >> .env
+          printf 'OCI_OCPUS=%s\n' "${{ secrets.OCI_OCPUS }}" >> .env
+          printf 'OCI_MEMORY_IN_GBS=%s\n' "${{ secrets.OCI_MEMORY_IN_GBS }}" >> .env
+          printf 'OCI_SHAPE=VM.Standard.A1.Flex\n' >> .env
+          printf 'OCI_MAX_INSTANCES=1\n' >> .env
+          printf 'OCI_SSH_PUBLIC_KEY="%s"\n' "${{ secrets.OCI_SSH_PUBLIC_KEY }}" >> .env
+
+      - name: Run hunter
+        run: php run.php

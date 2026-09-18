@@ -40,4 +40,4 @@ jobs:
           printf 'OCI_SSH_PUBLIC_KEY="%s"\n' "${{ secrets.OCI_SSH_PUBLIC_KEY }}" >> .env
 
       - name: Run hunter
-        run: php run.php
+        run: php index.php
